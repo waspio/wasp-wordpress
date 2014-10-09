@@ -8,7 +8,7 @@
  * @package Wasp for Wordpress
  **/
 ?>
-<div class="wrap js-replace-frame">
+<div class="wrap">
 
     <h2>About Wasp.io</h2>
     
@@ -16,16 +16,6 @@
     
     <p>Add unlimited users, unlimited projects, and unlimited awesome to manage your web projects.</p>
     
-    <p><a href="#" class="js-show-wasp">Click here</a> to get started if you haven't already, or to login and check errors.</p>
+    <p><a href="https://wasp.io/register?utm_source=wordpress&utm_medium=admin&utm_campaign=wordpress" target="_blank">Click here</a> to get started if you haven't already, or to login and check errors.</p>
     
 </div>
-<script>
-jQuery(document).ready(function($){
-    $(document.body).on('click', 'a.js-show-wasp', function(event){
-        event.preventDefault();
-        var replacement = '<iframe class="js-wasp" src="https://wasp.io/register?utm_source=wordpress&utm_medium=admin&utm_campaign=wordpress" frameborder="0" style="overflow:hidden;height:100%;width:100%" height="900px" width="100%"></iframe>';
-        $('.js-replace-frame').html(replacement);
-        $('.js-wasp').css({'display' : 'block', 'height' : '800px', 'width' : '100%', 'margin': 'auto'});
-    });
-});
-</script>

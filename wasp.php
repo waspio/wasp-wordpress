@@ -24,11 +24,6 @@ define( 'WASP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WASP_LOGO', WASP_PLUGIN_URL . '/img/wasp.png' );
 define( 'WASP_CACHE_KEY', 'wasp_auth_response' );
 define( 'WASP_CACHE_DURATION', ( 2 * DAY_IN_SECONDS ) ); //Cache the response for 48hrs
-require_once( WASP_PLUGIN_DIR . 'plugin-updater/BFIGitHubPluginUploader.php' );
-if( is_admin() )
-{
-    new BFIGitHubPluginUpdater( __FILE__, 'waspio', 'wasp-wordpress' );
-}
 
 if( !defined( 'WP_DEBUG' ) )
     define( 'WP_DEBUG', false );
