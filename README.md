@@ -40,6 +40,9 @@ Error details are sent to the Wasp API (all things Waspside are SSL only for sec
 Changelog
 ---------
 
+### 2.1.7
+* Added warning for PHP version 5.3 and below
+
 ### 2.1.6
 * Initial Wordpress Plugin release
 

@@ -3,7 +3,7 @@
  * wasp.class.php
  * wasp.io
  * @author Wasp.io
- * @version 2.1.6
+ * @version 2.1.7
  * @date 28-Sep-2013
  * @updated 15-Sep-2014
  * @package wasp.io
@@ -74,7 +74,7 @@ class Wasp {
     static $user_data = array();
     private $timeout = 2;
     private $ip_address = '';
-    private $wasp_version = '2.1.6';
+    private $wasp_version = '2.1.7';
     private $environment = 'production';
     private $notification_uri = 'https://wasp.io/requests/datastore/v3/';
     private $display = false;
