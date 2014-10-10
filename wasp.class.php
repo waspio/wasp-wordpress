@@ -3,7 +3,7 @@
  * wasp.class.php
  * wasp.io
  * @author Wasp.io
- * @version 2.1.7
+ * @version 2.2.0
  * @date 28-Sep-2013
  * @updated 10-Oct-2014
  * @package wasp.io
@@ -27,7 +27,11 @@
  *           'yoursite.local' 
  *      ), 
  *     'generate_log' => 'fullpathtodir'    //String: full writable path to directory to generate logfiles in, 
- *     'full_backtrace' => true             //Bool, defaults to false
+ *     'full_backtrace' => true             //Bool, defaults to false, 
+ *     'filters' => array(                  //Array of session or post keys to remove data for
+ *          'password', 
+ *          'creditcard'
+ *      )
  * );
  * try {
  *     $wasp = new Wasp( $api_key, $params );   
@@ -54,6 +58,7 @@
  ** startup()               //Get startup vars for server, session, get and posts
  ** reject_host()           //Determine if errors from this host should be sent to wasp
  ** skip_error()            //determine if an error with this level should be skipped
+ ** sensitive_filter()      //Filter user defined values from $_SESSION and $_POST data
  ** backtrace_retriever()   //Allow configuration to grab LESS backtrace data to save performance
  ** clean_tracepath()       //return only tracepath values that are useful
  ** get_backtrace()         //get full debug backtrace values
@@ -78,29 +83,25 @@ class Wasp {
     static $user_data = array();
     private $timeout = 2;
     private $ip_address = '';
-    private $wasp_version = '2.1.7';
-    private $environment = 'production';
+    private $wasp_version = '2.2.0';
     private $notification_uri = 'https://wasp.io/requests/datastore/v3/';
-    private $display = false;
-    private $code = false;
-    private $full_backtrace = false;
-    private $open = '';
-    private $close = '';
     private $php_version = \PHP_VERSION;
     private $browser = array();
     static $settings = array();
     private static $requests = array();
     private static $display_errors = array();
     private $config_keys = array(
-        'redirect', 
-        'display', 
-        'environment', 
-        'open', 
-        'close', 
-        'code', 
-        'ignore', 
-        'ignored_domains', 
-        'generate_log'
+        'redirect' => false, 
+        'display' => false, 
+        'environment' => 'production', 
+        'open' => '', 
+        'close' => '', 
+        'code' => false, 
+        'ignore' => array(), 
+        'ignored_domains' => array(), 
+        'generate_log' => false, 
+        'filters' => false, 
+        'full_backtrace' => false
     );
     protected $error_levels = array(
         \E_NOTICE => 1, 
@@ -161,20 +162,23 @@ class Wasp {
             error_log( 'Please install and enable cURL in your PHP server to use Wasp.' );
         }
         
-        $server = $this->startup();
         self::$settings['api_key'] = $api_key;
         self::$settings['wasp_version'] = $this->wasp_version;
         self::$settings['php_version'] = $this->php_version;
-        self::$settings['full_backtrace'] = $this->full_backtrace;
 
-        foreach( $this->config_keys as $key )
+        foreach( $this->config_keys as $key => $value )
         {
-            if( isset( $vars[$key] ) )
+            if( isset( $vars[$key] ) && !empty( $vars[$key] ) )
             {
                 self::$settings[$key] = $vars[$key];
             }
+            else
+            {
+                self::$settings[$key] = $value;
+            }
         }
-        self::$settings = array_merge( self::$settings, $vars, $server );
+        $startup = $this->startup();
+        self::$settings = array_merge( self::$settings, $vars, $startup );
     }
     //end __construct()
     
@@ -390,7 +394,7 @@ class Wasp {
         //POST
         if( isset( $_POST ) && !empty( $_POST ) )
         {
-            $return['user_configuration']['Post'] = $_POST;   
+            $return['user_configuration']['Post'] = $this->sensitive_filter( $_POST );   
         }
         
         //Session Vars; must first start the session if not already started
@@ -400,7 +404,7 @@ class Wasp {
         }
         if( !empty( $_SESSION ) )
         {
-            $return['user_configuration']['Session'] = $_SESSION;   
+            $return['user_configuration']['Session'] = $this->sensitive_filter( $_SESSION );   
         }
         
         //Cookies
@@ -466,6 +470,47 @@ class Wasp {
     
     
     /**
+    * Function to allow known sensitive data to be stripped automatically
+    * Accepts only arrays for filtering
+    * ONLY applies to $_POST and $_SESSION data
+    * Uses filters array
+    * @access private
+    * @param array $data
+    * @param string $replacement
+    * @return mixed
+    */
+    private function sensitive_filter( $data, $replacement = '[redacted]' )
+    {
+        if( empty( $data ) || !is_array( $data ) || !self::$settings['filters'] )
+        {
+            return $data;
+        }
+
+        $defined_filters = self::$settings['filters'];
+        
+        //Make the filter usable
+        $recursivify = function( &$item, $key) use ( $defined_filters, $replacement ) {
+
+            //Loop through each assigned filter and check it against the data input
+            foreach( $defined_filters as $filter )
+            {
+                if( !empty( $item ) && preg_match( "/".strtolower( trim( $filter ) ) ."/i", strtolower( trim( $key ) ) ) )
+                {
+                    $item = $replacement;
+                }
+            }
+
+        };
+
+        //Loop through the data filtering along the way
+        array_walk_recursive( $data, $recursivify );
+
+        return $data;
+    }
+    //end sensitive_filter()
+    
+    
+    /**
      * Allow configuration to grab LESS backtrace data to save performance
      * Defaults to limited backtrace to save memory on the server
      * @access private
@@ -503,12 +548,35 @@ class Wasp {
         $data = array();
         foreach( $e->getTrace() as $trace )
         {
-            $data[] = array(
-                'file' => isset( $trace['file'] ) ? $trace['file'] : 'unknown',
-                'line' => isset( $trace['line'] ) ? $trace['line'] : 'unknown',
-                'function' => isset( $trace['function'] ) ? $trace['function'] : 'unknown', 
-                'args' => isset( $trace['args'] ) ? $trace['args'] : ''
-            );
+            //Skip this file
+            if( ( isset( $trace['file'] ) && $trace['file'] == __FILE__ ) || count( $trace ) == 0 )
+            {
+                continue;
+            }
+            
+            if( $trace['function'] == 'error_handler' && count( $data ) == 0 )
+            {
+                continue;
+            }
+            
+            if( isset( $trace['file'] ) )
+            {
+                $params['file'] = $trace['file'];
+            }
+            if( isset( $trace['line'] ) )
+            {
+                $params['line'] = $trace['line'];
+            }
+            if( isset( $trace['function'] ) )
+            {
+                $params['function'] = $trace['function'];
+            }
+            if( isset( $trace['args'] ) && !empty( $trace['args'] ) )
+            {
+                //Only grab the first 10 elements in args
+                $params['args'] = array_splice( $trace['args'], 0, 10 );
+            }
+            $data[] = $params;
         }
 
         //Add the first error from the stacktrace
@@ -549,14 +617,22 @@ class Wasp {
                 continue;
             }
             
-            $params = array(
-                'file' => isset( $trace['file'] ) ? $trace['file'] : '',
-                'line' => isset( $trace['line'] ) ? $trace['line'] : '',
-                'function' => isset( $trace['function'] ) ? $trace['function'] : ''
-            );
+            if( isset( $trace['file'] ) )
+            {
+                $params['file'] = $trace['file'];
+            }
+            if( isset( $trace['line'] ) )
+            {
+                $params['line'] = $trace['line'];
+            }
+            if( isset( $trace['function'] ) )
+            {
+                $params['function'] = $trace['function'];
+            }
             if( isset( $trace['args'] ) && !empty( $trace['args'] ) )
             {
-                $params['args'] = $trace['args'];
+                //Only grab the first 10 elements in args
+                $params['args'] = array_splice( $trace['args'], 0, 10 );
             }
             $data[] = $params;
         }
@@ -986,7 +1062,7 @@ class Wasp {
     private function generate_logfile( $message )
     {
         //Log the errors to a file as necessary
-        if( isset( self::$settings['generate_log'] ) && 
+        if( ( self::$settings['generate_log'] === true ) && 
             is_dir( self::$settings['generate_log'] ) && 
             is_writable( self::$settings['generate_log'] ) 
         )

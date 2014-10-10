@@ -75,6 +75,15 @@
                     <p class="description">A comma separated list of domains to ignore (without http/s or www)</p>
                 </td>
             </tr>
+            
+            <tr valign="top">
+                <th scope="row">Data to Filter</th>
+                <td>
+                    <input type="text" name="wasp_filters" value="<?php echo get_option( 'wasp_filters' ); ?>" placeholder="creditcard, private_info, etc..." />
+                    <br />
+                    <p class="description">A comma separated list of $_SESSION or $_POST variables to strip.  Useful for credit card processing, or other sensitive data.  This is for the input name, or key, and will retain the key while removing the value.</p>
+                </td>
+            </tr>
 
             <tr valign="top">
                 <th scope="row">Track Logged In Users</th>
