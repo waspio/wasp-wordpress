@@ -214,7 +214,7 @@ if( !function_exists( 'wasp_checkkey' ) )
             }
             else
             {
-                $body = wp_remote_retrieve_body( &$response );
+                $body = wp_remote_retrieve_body( $response );
                 $body = json_decode( $body, true );
                 if( $body['status'] == true && $body['status'] == 200 )
                 {

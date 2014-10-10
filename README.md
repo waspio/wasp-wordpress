@@ -42,6 +42,7 @@ Changelog
 
 ### 2.1.7
 * Added warning for PHP version 5.3 and below
+* Added try/catch block
 
 ### 2.1.6
 * Initial Wordpress Plugin release
