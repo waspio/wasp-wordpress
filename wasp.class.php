@@ -5,7 +5,7 @@
  * @author Wasp.io
  * @version 2.1.7
  * @date 28-Sep-2013
- * @updated 15-Sep-2014
+ * @updated 10-Oct-2014
  * @package wasp.io
  *
  * Custom error handling and reporting
@@ -29,7 +29,11 @@
  *     'generate_log' => 'fullpathtodir'    //String: full writable path to directory to generate logfiles in, 
  *     'full_backtrace' => true             //Bool, defaults to false
  * );
- * $wasp = new Wasp( $api_key, $params );
+ * try {
+ *     $wasp = new Wasp( $api_key, $params );   
+ * } catch ( Exception $e ) {
+ *     echo 'Wasp Exception: '.$e->getMessage();
+ * }
  *
  * Once Wasp has been initiated, you may add user specific data by calling the add_user() function:
  *
@@ -132,15 +136,15 @@ class Wasp {
      */
     public function __construct( $api_key = '', $vars = array() )
     {
+        //Make sure we have a new enough version of PHP for Wasp to do it's job
+        if( version_compare( $this->php_version, '5.3.0', '<' ) )
+        {
+            throw new Exception( 'Wasp requires at least PHP 5.3.0' );
+        }
+        
         //Set the environmental error reporting
         error_reporting( -1 );
         ini_set( 'display_errors', 0 );
-        
-        //Accomodate error types that did not exist prior to 5.3
-        if( !defined( 'E_USER_DEPRECATED' ) )
-            define( 'E_USER_DEPRECATED', 16384 );
-        if( !defined( 'E_DEPRECATED' ) )
-            define( 'E_DEPRECATED', 8192 );
         
         set_error_handler( array( $this, 'error_handler' ) );
         set_exception_handler( array( $this, 'exception_handler' ) );
@@ -378,25 +382,29 @@ class Wasp {
         }
         
         //GET
-        if( isset( $_GET ) )
+        if( isset( $_GET ) && !empty( $_GET ) )
         {
             $return['user_configuration']['Get'] = $_GET;   
         }
         
         //POST
-        if( isset( $_POST ) )
+        if( isset( $_POST ) && !empty( $_POST ) )
         {
             $return['user_configuration']['Post'] = $_POST;   
         }
         
-        //Session Vars
-        if( isset( $_SESSION ) )
+        //Session Vars; must first start the session if not already started
+        if( !isset( $_SESSION ) )
+        {
+            session_start();
+        }
+        if( !empty( $_SESSION ) )
         {
             $return['user_configuration']['Session'] = $_SESSION;   
         }
         
         //Cookies
-        if( isset( $_COOKIE ) )
+        if( isset( $_COOKIE ) && !empty( $_COOKIE ) )
         {
             $return['user_configuration']['Cookies'] = $_COOKIE;   
         }

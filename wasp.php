@@ -287,10 +287,16 @@ if( !function_exists( 'wasp_start' ) )
                 'ignored_domains' => $ignored_domains
             );
             global $wasp;
-            $wasp = new Wasp( get_option( 'wasp_api_key' ), $params );
+            try {
+                $wasp = new Wasp( get_option( 'wasp_api_key' ), $params );   
+            } catch ( Exception $e ) {
+                $wasp = null;
+                $wasp_activated = false;
+                add_action( 'admin_notices', 'wasp_warn_phpversion' );
+            }
             
             //Add a user if the settings say to
-            if( get_option( 'wasp_track_users' ) == 1 && is_user_logged_in() )
+            if( get_option( 'wasp_track_users' ) == 1 && is_user_logged_in() && !is_null( $wasp ) )
             {
                 global $current_user;
                 get_currentuserinfo();
@@ -346,17 +352,6 @@ if( !function_exists( 'curl_version' ) )
     }
     add_action( 'admin_notices', 'wasp_no_curl' );
 }
-
-if( version_compare( PHP_VERSION, '5.3.0', '<' ) )
-{
-    function wasp_warn_phpversion()
-    {
-        echo '<div class=\'updated fade\'><p><strong>Wasp.io requires PHP version 5.3.0 or above.</strong> Please update PHP to at least 5.3, or contact your server administrator.  Your current PHP version is '.PHP_VERSION.'.</p></div>';
-    }
-
-    add_action( 'admin_notices', 'wasp_warn_phpversion' );
-}
-
 if( get_option( 'wasp_active_status' ) == 1 && !wasp_checkkey() )
 {
     function wasp_no_user()
@@ -364,4 +359,8 @@ if( get_option( 'wasp_active_status' ) == 1 && !wasp_checkkey() )
         echo '<div class=\'updated fade\'><p>Wasp is ready to track errors, but first you\'ll need to enter your API key on the <a href="admin.php?page=wasp-settings">configuration page.</a></p></div>';
     }
     add_action( 'admin_notices', 'wasp_no_user' );
+}
+function wasp_warn_phpversion()
+{
+    echo '<div class=\'updated fade\'><p><strong>Wasp.io requires PHP version 5.3.0 or above.</strong> Please update PHP to at least 5.3, or contact your server administrator.  Your current PHP version is '.PHP_VERSION.'.</p></div>';
 }
