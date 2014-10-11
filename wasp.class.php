@@ -3,7 +3,7 @@
  * wasp.class.php
  * wasp.io
  * @author Wasp.io
- * @version 2.2.0
+ * @version 2.2.1
  * @date 28-Sep-2013
  * @updated 10-Oct-2014
  * @package wasp.io
@@ -83,7 +83,7 @@ class Wasp {
     static $user_data = array();
     private $timeout = 2;
     private $ip_address = '';
-    private $wasp_version = '2.2.0';
+    private $wasp_version = '2.2.1';
     private $notification_uri = 'https://wasp.io/requests/datastore/v3/';
     private $php_version = \PHP_VERSION;
     private $browser = array();
@@ -138,7 +138,7 @@ class Wasp {
     public function __construct( $api_key = '', $vars = array() )
     {
         //Make sure we have a new enough version of PHP for Wasp to do it's job
-        if( version_compare( $this->php_version, '5.3.0', '<' ) )
+        if( version_compare( $this->php_version, '5.3.0' ) < 0 )
         {
             throw new Exception( 'Wasp requires at least PHP 5.3.0' );
         }
