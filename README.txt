@@ -48,6 +48,7 @@ Error details are sent to the Wasp API (all things Waspside are SSL only for sec
 = 2.2.0 =
 * Added support for user defined filters to remove potentially sensitive data
 * Consolidated configuration options
+* Better presentation of ignored levels within admin
 
 = 2.1.7 =
 * Added warning for PHP version 5.3 and below

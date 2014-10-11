@@ -128,19 +128,21 @@
             <tr valign="top">
                 <th scope="row">Error Types to <strong>Ignore</strong></th>
                 <td>
-                <?php
-                $ignored = get_option( 'wasp_ignored_levels' );
-                global $wasp_levels;
-                foreach( $wasp_levels as $label => $level )
-                {
-                    $sel = '';
-                    if( is_array( $ignored ) && in_array( $level, $ignored ) )
+                <div style="height: 200px; overflow: auto;">
+                    <?php
+                    $ignored = get_option( 'wasp_ignored_levels' );
+                    global $wasp_levels;
+                    foreach( $wasp_levels as $label => $level )
                     {
-                        $sel = ' checked="checked"';
+                        $sel = '';
+                        if( is_array( $ignored ) && in_array( $level, $ignored ) )
+                        {
+                            $sel = ' checked="checked"';
+                        }
+                        echo '<input type="checkbox" name="wasp_ignored_levels[]" value="'.$level.'" id="wasplevel_'.$level.'"'.$sel.'> <label for="wasplevel_'.$level.'">'.$label.'</label><br />';
                     }
-                    echo '<input type="checkbox" name="wasp_ignored_levels[]" value="'.$level.'" id="wasplevel_'.$level.'"'.$sel.'> <label for="wasplevel_'.$level.'">'.$label.'</label><br />';
-                }
-                ?>
+                    ?>
+                </div>
                 </td>
             </tr>
 
