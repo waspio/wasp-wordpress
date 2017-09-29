@@ -1,1 +1,4 @@
 notes.txt
+*.tmproj
+*.DS_Store
+.idea
